@@ -2,34 +2,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include "Struct.h"
-#include <conio.h>
 
-
-#pragma comment(lib, "ws2_32.lib")
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#ifdef _WIN32			//Wenn Programm auf Windowsrechner gestartet wird werden folgende Bibiliotheken geladen
-#include <WinSock2.h>
-#include <ws2tcpip.h>
-#else					//Wenn Programma auf Linux
+					//Wenn Programma auf Linux
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#endif
 
 #define BUFFERSIZE 1028
 
-int setupWinSock() {
-    WSADATA wsa;
 
-    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        return 1;
-    }
-}
-void main(int argc, char* argv[]) {
 
-    if (setupWinSock()) {
-        abort();
-    }
+int main(int argc, char* argv[]) {
+    
+    printf("\n\nInitlizing Server...\n\n");
     int port = atoi(argv[1]);
     char* sNummer = argv[2];
 
@@ -38,10 +23,10 @@ void main(int argc, char* argv[]) {
 
     struct sockaddr_in6 serveraddr, clientaddr;
 
-    SOCKET listeningsocket = socket(AF_INET6, SOCK_STREAM, 0);
+    int listeningsocket = socket(AF_INET6, SOCK_STREAM, 0);
 
     if (listeningsocket < 0) {
-        printf("SOCKET ERROR IPV6: %d\n", WSAGetLastError());
+        printf("SOCKET ERROR IPV6: ");
         return -1;
     }
     memset(&serveraddr, 0, sizeof(serveraddr));
@@ -51,8 +36,8 @@ void main(int argc, char* argv[]) {
     serveraddr.sin6_port = htons(7000);
 
 
-    if (bind(listeningsocket, (struct serveraddr*)&serveraddr, sizeof(serveraddr)) < 0) {
-        printf("BIND ERROR IPV6: %d\n", WSAGetLastError());
+    if (bind(listeningsocket, (struct sockaddr*)&serveraddr, sizeof(serveraddr)) < 0) {
+        printf("BIND ERROR IPV6");
         return -1;
     }
 
@@ -60,32 +45,28 @@ void main(int argc, char* argv[]) {
 
     clielen = sizeof(clientaddr);
 
-    SOCKET newsock = accept(listeningsocket, (struct serveraddr*)&clientaddr, &clielen);
+    int newsock = accept(listeningsocket, (struct sockaddr*)&clientaddr, &clielen);
 
     if (newsock < 0) {
-        printf("ACCEPT ERROR IPV6: %d\n", WSAGetLastError());
+        printf("ACCEPT ERROR IPV6: ");
         return -1;
     }
-
+    printf("Succesfully connectet to: %s",sNummer);
+    
+    printf("%s> ",sNummer);
     fd_set readfds;
-    printf("%s>", sNummer);
+    
     for (;;) {
-
-
-       
-
        
         FD_ZERO(&readfds);
-
         FD_SET(newsock, &readfds);
+        FD_SET(0,&readfds);
 
         if (select(newsock+1, &readfds, NULL, NULL,NULL) < 0) {
             perror("select error");
         }
-
-    
+	
         if (FD_ISSET(newsock, &readfds)) {
-
 
             struct packet incommingmsg;
             char recvbuf[sizeof(struct packet)];
@@ -94,26 +75,28 @@ void main(int argc, char* argv[]) {
 
             recvlen = recv(newsock, recvbuf, sizeof(struct packet), 0);
             if (recvlen < 0) {
-                printf("RECV ERROR IPV6: %d\n", WSAGetLastError());
+                printf("RECV ERROR IPV6:");
                 return -1;
             }
             memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
+            fflush(stdout);
             printf("%s > %s", incommingmsg.snummer, incommingmsg.text);
         }
-        else {
-            printf("%s>", sNummer);
-            fflush(stdout);
-
+        
+        if(FD_ISSET(0,&readfds)){
+        
+	    fflush(stdout);
+	    printf("%s>",sNummer);
             char buf[BUFFERSIZE];
             fgets(buf, BUFFERSIZE, stdin);
-
-            printf("%s> %s", sNummer, buf);
+	   
+            
             struct packet message;
             strcpy(message.snummer, sNummer);
             strcpy(message.text, buf);
 
             if (send(newsock, &message, sizeof(struct packet), 0) != sizeof(struct packet)) {
-                printf("SEND ERROR IPV6: %d\n", WSAGetLastError());
+                printf("SEND ERROR IPV6:");
                 return -1;
             }
 
@@ -130,8 +113,8 @@ void main(int argc, char* argv[]) {
     
 
 
-        closesocket(newsock);
-        closesocket(listeningsocket);
+        close(newsock);
+        close(listeningsocket);
         return 0;
     }
 
