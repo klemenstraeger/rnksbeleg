@@ -2,37 +2,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include "Struct.h"
-#include <stdint.h>
-#pragma comment(lib, "ws2_32.lib")
-
-#ifdef _WIN32	
-#include <winsock2.h>//Wenn Programm auf Windowsrechner gestartet wird werden folgende Bibiliotheken geladen
-#include <ws2tcpip.h>
-#include <io.h>
-#else					//Wenn Programma auf Linux
+#include <stdint.h>				//Wenn Programma auf Linux
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#endif
+
 
 
 
 #define BUFFERSIZE 1028
-#define _BSD_SOURCE
 
-int setupWinSock() {
-	WSADATA wsa;
 
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-		return 1;
-	}
-}
+
 
 int main(int argc, char* argv[]) {
-
-	if (setupWinSock()) {
-		abort();
-	}
 
 
 	char* ipv6adr = argv[1];
@@ -43,11 +26,11 @@ int main(int argc, char* argv[]) {
 	char sendbuf[BUFFERSIZE], sendtext[BUFFERSIZE];
 	struct sockaddr_in6 clientaddr;
 
-	SOCKET sock = socket(AF_INET6, SOCK_STREAM, 0);
+	int sock = socket(AF_INET6, SOCK_STREAM, 0);
 
 	//Socketfehler
 	if (sock < 0) {
-		printf("socket ERROR IPV6: %d\n", WSAGetLastError());
+		printf("socket ERROR IPV6: ");
 		return -1;
 	}
 	memset(&clientaddr, 0, sizeof(clientaddr));
@@ -64,13 +47,13 @@ int main(int argc, char* argv[]) {
 	int recvlen;
 
 	if (connect(sock, (struct sockaddr*)&clientaddr, sizeof(clientaddr)) < 0) {
-		printf("CONNECT ERROR IPV6: %d\n", WSAGetLastError());
+		printf("CONNECT ERROR IPV6:");
 		return -1;
 	}
 
 
 
-
+	printf("%s> ",&sNummer);
 	for(;;){
 		
 		fd_set readfds;
@@ -82,11 +65,13 @@ int main(int argc, char* argv[]) {
 		if (select(sock+1, &readfds, NULL, NULL, NULL) < 0) {
 			perror("select error");
 		}
+		//Keyboard Input and Message send
+		if (FD_ISSET(0, &readfds)) {
 
 			fgets(sendbuf, BUFFERSIZE, stdin);
 			txtlen = strlen(sendbuf);
-		
-
+		fflush(stdout);
+		printf("%s> ", sNummer);
 		struct packet message;
 
 
@@ -94,24 +79,27 @@ int main(int argc, char* argv[]) {
 		strcpy(message.text, sendbuf);
 
 		if (send(sock, &message, sizeof(struct packet), 0) != sizeof(struct packet)) {
-			printf("SEND ERROR IPV6: %d\n", WSAGetLastError());
+			printf("SEND ERROR IPV6:");
 			return -1;
 		}
-
+		}
+		if (FD_ISSET(sock, &readfds)) {
 		struct packet incommingmsg;
 		char recvbuf[sizeof(struct packet)];
 		char sendbuf[BUFFERSIZE];
 		int txtlen;
-
+		
 		recvlen = recv(sock, recvbuf, sizeof(struct packet), 0);
 		if (recvlen < 0) {
-			printf("RECV ERROR IPV6: %d\n", WSAGetLastError());
+			printf("RECV ERROR IPV6:");
 			return -1;
 		}
 		memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
+		fflush(stdout);
 		printf("%s > %s", incommingmsg.snummer, incommingmsg.text);
+		}
 	} while (1);
 
-	closesocket(sock);
+	close(sock);
 }
 
