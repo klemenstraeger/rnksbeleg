@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "Struct.h"
+#include <conio.h>
+
 
 #pragma comment(lib, "ws2_32.lib")
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -13,7 +16,7 @@
 #include <arpa/inet.h>
 #endif
 
-#define BUFFERSIZE 124
+#define BUFFERSIZE 1028
 
 int setupWinSock() {
     WSADATA wsa;
@@ -28,16 +31,16 @@ void main(int argc, char* argv[]) {
         abort();
     }
     int port = atoi(argv[1]);
+    char* sNummer = argv[2];
 
-    
-    
+
     int clielen, recvlen;
-    char recvbuf[BUFFERSIZE];
+
     struct sockaddr_in6 serveraddr, clientaddr;
 
-    SOCKET sock = socket(AF_INET6, SOCK_STREAM, 0);
+    SOCKET listeningsocket = socket(AF_INET6, SOCK_STREAM, 0);
 
-    if (sock < 0) {
+    if (listeningsocket < 0) {
         printf("SOCKET ERROR IPV6: %d\n", WSAGetLastError());
         return -1;
     }
@@ -46,34 +49,90 @@ void main(int argc, char* argv[]) {
     serveraddr.sin6_family = AF_INET6;
     serveraddr.sin6_addr = in6addr_any;
     serveraddr.sin6_port = htons(7000);
-    
 
-    if (bind(sock, (struct serveraddr*)&serveraddr, sizeof(serveraddr)) < 0) {
+
+    if (bind(listeningsocket, (struct serveraddr*)&serveraddr, sizeof(serveraddr)) < 0) {
         printf("BIND ERROR IPV6: %d\n", WSAGetLastError());
         return -1;
     }
 
-    listen(sock, 5);
+    listen(listeningsocket, 5);
 
     clielen = sizeof(clientaddr);
 
-    SOCKET newsock = accept(sock, (struct serveraddr*)&clientaddr, &clielen);
+    SOCKET newsock = accept(listeningsocket, (struct serveraddr*)&clientaddr, &clielen);
 
     if (newsock < 0) {
         printf("ACCEPT ERROR IPV6: %d\n", WSAGetLastError());
         return -1;
     }
-    recvlen = recv(newsock, recvbuf, BUFFERSIZE, 0);
 
-    if (recvlen < 0) {
-        printf("RECV ERROR IPV6: %d\n", WSAGetLastError());
-        return -1;
+    fd_set readfds;
+    printf("%s>", sNummer);
+    for (;;) {
+
+
+       
+
+       
+        FD_ZERO(&readfds);
+
+        FD_SET(newsock, &readfds);
+
+        if (select(newsock+1, &readfds, NULL, NULL,NULL) < 0) {
+            perror("select error");
+        }
+
+    
+        if (FD_ISSET(newsock, &readfds)) {
+
+
+            struct packet incommingmsg;
+            char recvbuf[sizeof(struct packet)];
+            char sendbuf[BUFFERSIZE];
+            int txtlen;
+
+            recvlen = recv(newsock, recvbuf, sizeof(struct packet), 0);
+            if (recvlen < 0) {
+                printf("RECV ERROR IPV6: %d\n", WSAGetLastError());
+                return -1;
+            }
+            memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
+            printf("%s > %s", incommingmsg.snummer, incommingmsg.text);
+        }
+        else {
+            printf("%s>", sNummer);
+            fflush(stdout);
+
+            char buf[BUFFERSIZE];
+            fgets(buf, BUFFERSIZE, stdin);
+
+            printf("%s> %s", sNummer, buf);
+            struct packet message;
+            strcpy(message.snummer, sNummer);
+            strcpy(message.text, buf);
+
+            if (send(newsock, &message, sizeof(struct packet), 0) != sizeof(struct packet)) {
+                printf("SEND ERROR IPV6: %d\n", WSAGetLastError());
+                return -1;
+            }
+
+        }
+
+           
+            
+        
+        //RECEIVE MESSAGE
+        
+
     }
-    recvbuf[recvlen] = 0;
-    printf("%s\n", recvbuf);
+        
+    
 
 
-    close(newsock);
-    close(sock);
-    return 0;
-}
+        closesocket(newsock);
+        closesocket(listeningsocket);
+        return 0;
+    }
+
+
