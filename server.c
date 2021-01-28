@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
 	}
 
 	memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
-	fflush(stdout);
+	
 	printf("Verbunden mit: %s\n", incommingmsg.snummer);
 	fflush(stdout);
-
-	printf("%s>", sNummer);
+	
+	printf("Beginne einen Chat...\n:");
 	fflush(stdout);
 	
 	int first =1;
@@ -103,28 +103,22 @@ int main(int argc, char *argv[])
 				return -1;
 			}
          if(recvlen  == 0){
-            printf("Client disconnectet!");
+            printf("Client disconnected!");
             break;
          }
 
 			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
-			fflush(stdout);
-			printf("\n%s > %s", incommingmsg.snummer, incommingmsg.text);
+			
+			printf("%s> %s", incommingmsg.snummer, incommingmsg.text);
 			fflush(stdout);
 
 		}
 
 		if (FD_ISSET(0, &readfds))
 		{
-		  if(!first){
-		  fflush(stdout);
-		    printf("%s > ", sNummer);
-				   fflush(stdout);
-		    first =0;
-		 }
-         		fflush(stdout);
-			printf("%s>", sNummer);
-			fflush(stdout);
+
+   
+
 			char buf[BUFFERSIZE];
 
 			fgets(buf, BUFFERSIZE, stdin);
