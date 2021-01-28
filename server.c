@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
 	int first =1;
 
 	fd_set readfds;
+
 	for (;;)
 	{
 		FD_ZERO(&readfds);
@@ -125,9 +126,8 @@ int main(int argc, char *argv[])
 			printf("%s>", sNummer);
 			fflush(stdout);
 			char buf[BUFFERSIZE];
-			fflush(stdin);
-			scanf("%s", &buf);
-			fflush(stdin);
+
+			fgets(buf, BUFFERSIZE, stdin);
 			struct packet message;
 			strcpy(message.snummer, sNummer);
 			strcpy(message.text, buf);
