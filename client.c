@@ -65,13 +65,13 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	
 	int first = 1;
+	fd_set readfds;
+
+		
+		
 
 	for (;;)
 	{
-		
-	        fflush(stdout);
-		fd_set readfds;
-
 		FD_ZERO(&readfds);
 		FD_SET(sock, &readfds);
 		FD_SET(0, &readfds);
