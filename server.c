@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 			struct packet incommingmsg;
 			char recvbuf[sizeof(struct packet)];
 
-			recvlen = recv(incsock, recvbuf, sizeof(struct packet), 0);
+			int recvlen = recv(incsock, recvbuf, sizeof(struct packet), 0);
 			if (recvlen < 0)
 			{
 				printf("RECV ERROR IPV6:");
@@ -96,12 +96,12 @@ int main(int argc, char *argv[])
 
 			if (recvlen == 0)
 			{
-				printf("Client disconnected!");
+				printf("Client disconnected!\n");
 				break;
 			}
 
 			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
-			printf("%s > %s", incommingmsg.snummer, incommingmsg.text);
+			printf("%s> %s", incommingmsg.snummer, incommingmsg.text);
 			fflush(stdout);
 
 		}
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 			if (sendret == -1)
 			{
-				printf("Client disconected!");
+				printf("Client disconected!\n");
 				break;
 			}
 		}
