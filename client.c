@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	char sendbuf[BUFFERSIZE], sendtext[BUFFERSIZE];
 	struct sockaddr_in6 clientaddr;
 
-	int sock = socket(AF_INET6, SOCK_STREAM, 0);
+	int sock = socket(AF_INET6, SOCK_STREAM , 0);
 
 	//Socketfehler
 	if (sock < 0)
@@ -63,6 +63,8 @@ int main(int argc, char *argv[])
 
 	printf("Mit Server verbunden...\n");
 	fflush(stdout);
+	printf("Beginne einen Chat...\n:");
+	fflush(stdout);
 	
 	int first = 1;
 	fd_set readfds;
@@ -86,9 +88,6 @@ int main(int argc, char *argv[])
 		//Keyboard Input and Message send
 		if (FD_ISSET(0, &readfds))
 		{	
-			fflush(stdout);
-			printf("%s>", sNummer);
-			fflush(stdin);
 			
 			fgets(sendbuf, BUFFERSIZE, stdin);
 			fflush(stdin);
@@ -107,7 +106,7 @@ int main(int argc, char *argv[])
 
 			if (sendret == -1)
 			{
-				printf("Server hat die Verbindung unterbrochen!");
+				printf("Server disconnected!");
 				break;
 			}
 
@@ -128,13 +127,13 @@ int main(int argc, char *argv[])
 				return -1;
 			}
 			 if(recvlen  == 0){
-			    printf("Client disconnectet!");
+			    printf("Server disconnected!");
 			    break;
 			 }
 
 			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
 			fflush(stdout);
-			printf("\n%s > %s", incommingmsg.snummer, incommingmsg.text);
+			printf("%s> %s", incommingmsg.snummer, incommingmsg.text);
 			fflush(stdout);
 		}
 	}
