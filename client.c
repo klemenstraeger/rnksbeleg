@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	//Verbindung herstellen zum Server!
 	if (connect(sock, (struct sockaddr *) &clientaddr, sizeof(clientaddr)) < 0)
 	{
-		printf("CONNECT ERROR IPV6:");
+		perror("Connecterror:");
 		return -1;
 	}
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 		{
 			fgets(sendbuf, BUFFERSIZE, stdin);
 			fflush(stdin);
-			txtlen = strlen(sendbuf);
+			int txtlen = strlen(sendbuf);
 			struct packet message;
 			strcpy(message.snummer, sNummer);
 			strcpy(message.text, sendbuf);
