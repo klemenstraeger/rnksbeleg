@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 			if (sendret == -1)
 			{
-				printf("Client disconected!")
+				printf("Client disconected!");
 				break;
 			}
 		}
