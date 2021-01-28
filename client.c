@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 
 			if (sendret == -1)
 			{
-				printf("Server disconnected!");
+				printf("Server disconnected!\n");
 				break;
 			}
 		}
@@ -115,14 +115,14 @@ int main(int argc, char *argv[])
 
 			if (recvlen == 0)
 			{
-				printf("Server disconnected!");
+				printf("Server disconnected!\n");
 				break;
 			}
 
 			//Ausgabe der Nachicht
 			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
 			fflush(stdout);
-			printf("%s > %s", incommingmsg.snummer, incommingmsg.text);
+			printf("%s> %s", incommingmsg.snummer, incommingmsg.text);
 			fflush(stdout);
 		}
 	}
