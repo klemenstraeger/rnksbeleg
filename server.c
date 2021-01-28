@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 	char *sNummer = argv[2];
 	printf("Name: %s\nPort: %d\n", sNummer, port);
 	int clielen, recvlen;
-
+	
 	struct sockaddr_in6 serveraddr, clientaddr;
 
 	int listeningsocket = socket(AF_INET6, SOCK_STREAM, 0);
@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
 
 	printf("%s>", sNummer);
 	fflush(stdout);
-
-   int first =1;
+	
+	int first =1;
 
 	fd_set readfds;
 	for (;;)
@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
 		FD_ZERO(&readfds);
 		FD_SET(newsock, &readfds);
 		FD_SET(0, &readfds);
+		
+		fflush(stdout);
 
 		if (select(newsock + 1, &readfds, NULL, NULL, NULL) < 0)
 		{
@@ -107,22 +109,25 @@ int main(int argc, char *argv[])
 			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
 			fflush(stdout);
 			printf("\n%s > %s", incommingmsg.snummer, incommingmsg.text);
+			fflush(stdout);
 
 		}
 
 		if (FD_ISSET(0, &readfds))
 		{
-          if(!first){
-            printf("%s > ", sNummer);
-			   fflush(stdout);
-            first =0;
-         }
-         
+		  if(!first){
+		  fflush(stdout);
+		    printf("%s > ", sNummer);
+				   fflush(stdout);
+		    first =0;
+		 }
+         		fflush(stdout);
 			printf("%s>", sNummer);
 			fflush(stdout);
 			char buf[BUFFERSIZE];
+			fflush(stdin);
 			scanf("%s", &buf);
-
+			fflush(stdin);
 			struct packet message;
 			strcpy(message.snummer, sNummer);
 			strcpy(message.text, buf);
