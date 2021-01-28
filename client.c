@@ -6,6 +6,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+
+#include <fcntl.h>
+
 #define BUFFERSIZE 1028
 
 int main(int argc, char *argv[])
@@ -14,6 +17,8 @@ int main(int argc, char *argv[])
 	char *ipv6adr = argv[1];
 	char *sNummer = argv[2];
 	short port = atoi(argv[3]);
+	
+	
 
 	int sendlen, txtlen;
 	char sendbuf[BUFFERSIZE], sendtext[BUFFERSIZE];
@@ -58,17 +63,20 @@ int main(int argc, char *argv[])
 
 	printf("Mit Server verbunden...\n");
 	fflush(stdout);
-   printf("%s>");
-   fflush(stdout);
-   int first = 1;
+	
+	int first = 1;
 
 	for (;;)
 	{
+		
+	        fflush(stdout);
 		fd_set readfds;
 
 		FD_ZERO(&readfds);
 		FD_SET(sock, &readfds);
 		FD_SET(0, &readfds);
+		
+		fflush(stdout);
 
 		if (select(sock + 1, &readfds, NULL, NULL, NULL) < 0)
 		{
@@ -77,14 +85,13 @@ int main(int argc, char *argv[])
 
 		//Keyboard Input and Message send
 		if (FD_ISSET(0, &readfds))
-		{
-         if(!first){
-            printf("%s > ", sNummer);
-			   fflush(stdout);
-            first =0;
-         }
+		{	
+			fflush(stdout);
+			printf("%s>", sNummer);
+			fflush(stdin);
 			
 			fgets(sendbuf, BUFFERSIZE, stdin);
+			fflush(stdin);
 			txtlen = strlen(sendbuf);
 
 			struct packet message;
@@ -120,14 +127,14 @@ int main(int argc, char *argv[])
 				printf("RECV ERROR IPV6:");
 				return -1;
 			}
-         if(recvlen  == 0){
-            printf("Client disconnectet!");
-            break;
-         }
+			 if(recvlen  == 0){
+			    printf("Client disconnectet!");
+			    break;
+			 }
 
 			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
-
-			printf("%s > %s\n", incommingmsg.snummer, incommingmsg.text);
+			fflush(stdout);
+			printf("\n%s > %s", incommingmsg.snummer, incommingmsg.text);
 			fflush(stdout);
 		}
 	}
