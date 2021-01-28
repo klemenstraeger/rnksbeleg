@@ -13,6 +13,9 @@
 
 #include <arpa/inet.h>
 
+#include <fcntl.h>
+
+
 #define BUFFERSIZE 1028
 
 int main(int argc, char * argv[]) {
@@ -20,7 +23,7 @@ int main(int argc, char * argv[]) {
    printf("\n\nInitlizing Server...\n\n");
    int port = atoi(argv[1]);
    char * sNummer = argv[2];
-
+   printf("Name: %s\nPort: %d\n",sNummer,port);
    int clielen, recvlen;
 
    struct sockaddr_in6 serveraddr, clientaddr;
@@ -28,7 +31,7 @@ int main(int argc, char * argv[]) {
    int listeningsocket = socket(AF_INET6, SOCK_STREAM, 0);
 
    if (listeningsocket < 0) {
-      printf("SOCKET ERROR IPV6: ");
+      perror("Socket error");
       return -1;
    }
    memset( & serveraddr, 0, sizeof(serveraddr));
@@ -38,25 +41,50 @@ int main(int argc, char * argv[]) {
    serveraddr.sin6_port = htons(7000);
 
    if (bind(listeningsocket, (struct sockaddr * ) & serveraddr, sizeof(serveraddr)) < 0) {
-      printf("BIND ERROR IPV6");
+      perror("Bind error");
       return -1;
    }
 
-   listen(listeningsocket, 5);
+   listen(listeningsocket, 30);
 
    clielen = sizeof(clientaddr);
+   
+  
 
-   int newsock = accept(listeningsocket, (struct sockaddr * ) & clientaddr, & clielen);
+  int  newsock = accept4(listeningsocket, (struct sockaddr * ) & clientaddr, & clielen,SOCK_NONBLOCK);
+	
+	
+  
+
+   
 
    if (newsock < 0) {
-      printf("ACCEPT ERROR IPV6: ");
+      perror("Accept error");
       return -1;
    }
-   printf("Succesfully connectet to: %s", sNummer);
+   
+   struct packet incommingmsg;
+         char recvbuf[sizeof(struct packet)];
+         char sendbuf[BUFFERSIZE];
+         int txtlen;
+         
+   recvlen = recv(newsock, recvbuf, sizeof(struct packet), 0);
+         if (recvlen < 0) {
+           perror("REcv Error error");
+            return -1;
+         }
+         memcpy( & incommingmsg, recvbuf, sizeof(recvbuf));
+         fflush(stdout);
+         printf("Verbunden mit: %s\n", incommingmsg.snummer);
+   		  fflush(stdout);
+   
+   
+   
 
-   printf("%s> ", sNummer);
-   fd_set readfds;
-
+   	printf("%s>",sNummer);
+       fflush(stdout);
+  
+	 fd_set readfds;
    for (;;) {
 
       FD_ZERO( & readfds);
@@ -81,24 +109,29 @@ int main(int argc, char * argv[]) {
          }
          memcpy( & incommingmsg, recvbuf, sizeof(recvbuf));
          fflush(stdout);
-         printf("%s > %s", incommingmsg.snummer, incommingmsg.text);
+         printf("\n%s > %s", incommingmsg.snummer, incommingmsg.text);
+  
       }
 
       if (FD_ISSET(0, & readfds)) {
-
+	  printf("%s>", sNummer);
          fflush(stdout);
-         printf("%s>", sNummer);
          char buf[BUFFERSIZE];
-         fgets(buf, BUFFERSIZE, stdin);
+         scanf("%s",&buf);
 
          struct packet message;
          strcpy(message.snummer, sNummer);
          strcpy(message.text, buf);
+         int sendret = send(newsock, & message, sizeof(struct packet), 0);
 
-         if (send(newsock, & message, sizeof(struct packet), 0) != sizeof(struct packet)) {
+         if ( sendret!= sizeof(struct packet)) {
             printf("SEND ERROR IPV6:");
             return -1;
          }
+         if(sendret ==-1){
+         break;
+         }
+         
 
       }
 
