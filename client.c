@@ -6,20 +6,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
-
-
-
 #define BUFFERSIZE 1028
 
-
-
-
-int main(int argc, char* argv[]) {
-
+int main(int argc, char *argv[])
+{
 	printf("Starte Client ...\n\n");
-	char* ipv6adr = argv[1];
-	char* sNummer = argv[2];
+	char *ipv6adr = argv[1];
+	char *sNummer = argv[2];
 	short port = atoi(argv[3]);
 
 	int sendlen, txtlen;
@@ -29,10 +22,12 @@ int main(int argc, char* argv[]) {
 	int sock = socket(AF_INET6, SOCK_STREAM, 0);
 
 	//Socketfehler
-	if (sock < 0) {
+	if (sock < 0)
+	{
 		printf("socket ERROR IPV6: ");
 		return -1;
 	}
+
 	memset(&clientaddr, 0, sizeof(clientaddr));
 
 	clientaddr.sin6_family = AF_INET6;
@@ -41,86 +36,101 @@ int main(int argc, char* argv[]) {
 
 	int af;
 	inet_pton(AF_INET6, ipv6adr, &(clientaddr.sin6_addr));
-	
-
 
 	int recvlen;
 
-	if (connect(sock, (struct sockaddr*)&clientaddr, sizeof(clientaddr)) < 0) {
+	if (connect(sock, (struct sockaddr *) &clientaddr, sizeof(clientaddr)) < 0)
+	{
 		printf("CONNECT ERROR IPV6:");
 		return -1;
 	}
-	
 
 	struct packet message;
-
 
 	strcpy(message.snummer, sNummer);
 	strcpy(message.text, "-");
 
-	if (send(sock, &message, sizeof(struct packet), 0) != sizeof(struct packet)) {
-			printf("SEND ERROR IPV6:");
-			return -1;
-		}
-	
+	if (send(sock, &message, sizeof(struct packet), 0) != sizeof(struct packet))
+	{
+		printf("SEND ERROR IPV6:");
+		return -1;
+	}
+
 	printf("Mit Server verbunden...\n");
 	fflush(stdout);
+   printf("%s>");
+   fflush(stdout);
+   int first = 1;
 
-	
-	for(;;){
-		
+	for (;;)
+	{
 		fd_set readfds;
 
 		FD_ZERO(&readfds);
 		FD_SET(sock, &readfds);
 		FD_SET(0, &readfds);
-		
-		if (select(sock+1, &readfds, NULL, NULL, NULL) < 0) {
+
+		if (select(sock + 1, &readfds, NULL, NULL, NULL) < 0)
+		{
 			perror("select error");
 		}
+
 		//Keyboard Input and Message send
-		if (FD_ISSET(0, &readfds)) {
-		
-		printf("%s> ", sNummer);
-		fflush(stdout);
-			scanf("%s",&sendbuf);
+		if (FD_ISSET(0, &readfds))
+		{
+         if(!first){
+            printf("%s > ", sNummer);
+			   fflush(stdout);
+            first =0;
+         }
+			
+			fgets(sendbuf, BUFFERSIZE, stdin);
 			txtlen = strlen(sendbuf);
-		fflush(stdout);
-		
-		struct packet message;
 
+			struct packet message;
 
-		strcpy(message.snummer, sNummer);
-		strcpy(message.text, sendbuf);
-		int sendret = send(sock, &message, sizeof(struct packet), 0);
-		if (sendret != sizeof(struct packet)) {
-			printf("SEND ERROR IPV6:");
-			return -1;
+			strcpy(message.snummer, sNummer);
+			strcpy(message.text, sendbuf);
+			int sendret = send(sock, &message, sizeof(struct packet), 0);
+			if (sendret != sizeof(struct packet))
+			{
+				printf("SEND ERROR IPV6:");
+				return -1;
+			}
+
+			if (sendret == -1)
+			{
+				printf("Server hat die Verbindung unterbrochen!");
+				break;
+			}
+
+			//incomming message
 		}
-		if(sendret == -1){
-		printf("Server hat die Verbindung unterbrochen!");
-		break;
-		}
-		//incomming message
-		}
-		if (FD_ISSET(sock, &readfds)) {
-		struct packet incommingmsg;
-		char recvbuf[sizeof(struct packet)];
-		char sendbuf[BUFFERSIZE];
-		int txtlen;
-		
-		recvlen = recv(sock, recvbuf, sizeof(struct packet), 0);
-		if (recvlen < 0) {
-			printf("RECV ERROR IPV6:");
-			return -1;
-		}
-		memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
-		
-		printf("%s > %s\n", incommingmsg.snummer, incommingmsg.text);
-		fflush(stdout);
+
+		if (FD_ISSET(sock, &readfds))
+		{
+			struct packet incommingmsg;
+			char recvbuf[sizeof(struct packet)];
+			char sendbuf[BUFFERSIZE];
+			int txtlen;
+
+			recvlen = recv(sock, recvbuf, sizeof(struct packet), 0);
+			if (recvlen < 0)
+			{
+				printf("RECV ERROR IPV6:");
+				return -1;
+			}
+         if(recvlen  == 0){
+            printf("Client disconnectet!");
+            break;
+         }
+
+			memcpy(&incommingmsg, recvbuf, sizeof(recvbuf));
+
+			printf("%s > %s\n", incommingmsg.snummer, incommingmsg.text);
+			fflush(stdout);
 		}
 	}
 
 	close(sock);
 }
-
